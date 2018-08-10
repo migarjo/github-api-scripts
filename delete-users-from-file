@@ -1,0 +1,41 @@
+#!/bin/sh
+
+filename=$1
+
+while IFS=, read -r name email
+do
+
+    if [[ ${email} == "null" || -z "${email}" ]]; then
+      echo "Email for "${name}" is null. Skipping..."
+    else
+
+
+      function generate_post_data()
+      {
+      cat <<EOF
+        {
+          "login": "${name}",
+          "email": "${email}"
+        }
+EOF
+      }
+
+      response=$(curl -s -w "%{http_code}" -k -X DELETE \
+    --url ${GHE_URL}/api/v3/admin/users/${name} \
+    --header 'authorization: Bearer '${GHE_TOKEN} \
+    --data "$(generate_post_data)")
+
+    response_code=${response: -3}
+
+    if [[ $response_code -ne 204 ]]; then
+      response_body=${response::${#response}-4}
+      echo "Failed to delete user: ${name}"
+      echo ${response_body} | jq '.'
+    else
+      echo "Deleted user: ${name}"
+    fi
+
+  fi
+
+
+done < ${filename}

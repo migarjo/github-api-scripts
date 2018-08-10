@@ -1,0 +1,40 @@
+#!/bin/sh
+
+filename=$1
+
+while IFS=, read -r name
+do
+
+    if [[ ${email} == "null" || -z "${email}" ]]; then
+      echo "Email for "${name}" is null. Skipping..."
+    else
+
+
+      function generate_post_data()
+      {
+      cat <<EOF
+        {
+          "login": "${name}",
+          "email": "${email}"
+        }
+EOF
+      }
+
+      response=$(curl -k -s -X POST \
+    --url ${GHE_URL}/api/v3/admin/users \
+    --header 'authorization: Bearer '${GHE_TOKEN} \
+    --data "$(generate_post_data)")
+
+    created_user_name=$(echo ${response} | jq '.login')
+
+    if [[ "${created_user_name}" == "\"${name}\"" ]]; then
+      echo "User ${name} successfully created"
+    else
+      error_message=$(echo ${response} | jq '.message')
+      echo "Error creating user: ${name}"
+      echo ${response} | jq '.'
+    fi
+  fi
+
+
+done < ${filename}

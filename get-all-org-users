@@ -1,0 +1,20 @@
+#!/bin/sh
+
+members="$(curl -s -H 'authorization: Bearer '${GITHUB_TOKEN} https://api.github.com/orgs/migarjo-test-org/members)"
+
+touch users.list
+
+for user in $(echo "${members}" | jq -r '.[] | @base64'); do
+    _jq() {
+     echo ${user} | base64 --decode | jq -r ${1}
+    }
+
+   user_name=$(_jq '.login')
+
+   user_email="$(curl -s \
+      --url https://api.github.com/users/${user_name} \
+      --header "authorization: Bearer ${GITHUB_TOKEN}" | jq -r '.email')"
+
+  echo ${user_name}','${user_email} >> users.list
+
+done
