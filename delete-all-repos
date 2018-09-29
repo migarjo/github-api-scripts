@@ -30,17 +30,13 @@
 
 
 ORG_NAME=$1
-STRING_MATCH=$2
 
-if [[ -z ${STRING_MATCH} ]]; then
-  echo "No comparison string has been set to delete repos. Listing repos instead."
-fi
 
-RESPONSE="$(curl --url ${GHE_URL}/api/v3/orgs/${ORG_NAME}/repos \
+response="$(curl --url ${GHE_URL}/api/v3/orgs/${ORG_NAME}/repos \
   -s \
-  --header "authorization: Bearer ${GHE_TOKEN}")"
+  --header "authorization: Bearer ${GHE_TOKEN}"
 
-for repo in $(echo "${RESPONSE}" | jq -r '.[] | @base64'); do
+for repo in $(echo "${response}" | jq -r '.[] | @base64'); do
     _jq() {
      echo ${repo} | base64 --decode | jq -r ${1}
     }
